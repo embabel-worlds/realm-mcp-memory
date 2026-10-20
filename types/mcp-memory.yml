@@ -1,0 +1,47 @@
+# MCP MEMORY — the knowledge graph the Model Context Protocol's reference memory server keeps, as a
+# child of the world's shared `Memory` label (default-world types/memory.yml). Every node carries
+# :Memory and :McpMemory, so:
+#
+#   MATCH (:Concept {value:'coffee'})-[r:RELEVANT_TO]->(m:Memory)      -- every memory system
+#   MATCH (:Concept {value:'coffee'})-[r:RELEVANT_TO]->(m:McpMemory)   -- the MCP server's graph alone
+#
+# The server stores its whole graph in one JSON-lines file (`memory.jsonl`, or wherever
+# MEMORY_FILE_PATH points): one entity per line — `{"type":"entity","name","entityType",
+# "observations":[…]}` — and one relation per line. The realm reads that file LIVE from the world's
+# data/memory/mcp/ folder (the file itself, or a symlink to the server's file, declared under
+# `filesTrustedRoots:` in world.yml). Each ENTITY line is one memory; relation lines are not
+# memories and are left out (`require: {type: entity}`).
+#
+# Retrieval is LEXICAL on the entity's own line — its name, type and observations — which is
+# exactly what the server's own `search_nodes` tool matches on, so a memory this realm finds is one
+# the server would find. `via:'agentic-rag'` expands the anchor into probe terms first.
+# Curation: an entity in the file is a current fact; the contract's `status` is ACTIVE.
+- name: McpMemory
+  parents: [Memory]
+  visibility: internal
+  userAnchor: false
+  description: "An entity the MCP memory server remembers — its name, its type and the observations recorded about it — read live from the server's memory.jsonl. One of the memory systems behind :Memory; reach it from a free-text Concept via RELEVANT_TO, or name :McpMemory to read this graph alone. m.text is the observations; m.name the entity; m.observations the list. Per-match data on the EDGE: r.score (1.0 = matched), r.mode, r.probe."
+  virtualJoins:
+    - anchorLabel: Concept
+      relationship: RELEVANT_TO
+      keyField: value
+      recordKeyField: matchedFor
+      producer: mcpMemorySearch
+      description: "LEXICAL relevance of an MCP memory to a FREE-TEXT topic — the term is matched against the entity's name, type and observations, as the server's own search_nodes does. Seeded from a query literal, e.g. (:Concept {value:'coffee'})-[:RELEVANT_TO]->(:McpMemory). A miss is an honest empty."
+    - anchorLabel: Concept
+      relationship: RELEVANT_TO
+      via: agentic-rag
+      keyField: value
+      recordKeyField: matchedFor
+      producer: mcpMemorySearchAgentic
+      description: "AGENTIC relevance — the topic is expanded into probe terms first, so \"morning routine\" finds the entity whose observation says \"flat white every morning\". Pin via:'agentic-rag' on the edge, optionally with an intent brief."
+  properties:
+    id:
+      description: "The entity's name in the MCP graph — the node identity (entity names are unique there)."
+      metadata:
+        identity: "true"
+    name: "The entity's name, as the MCP server keys it (e.g. 'Rod_Johnson')."
+    entityType: "The entity's type in the MCP graph (person, company, place, …)."
+    observations: "The observations recorded about the entity — a LIST of sentences; filter with membership."
+    file: "The memory file the entity was read from."
+    url: "A file:// link to the real memory file, where it actually lives."

@@ -1,0 +1,51 @@
+# Two `files` search producers over the MCP memory server's JSON-lines file, one per line
+# (`unit: line`): an entity line is a record whose fields — name, entityType, observations — are
+# reachable from `compute:` beside the file's own. `require: {type: entity}` keeps entities and
+# drops relation lines. The anchor's text is matched against the line, so a hit is one the
+# server's own search_nodes would return (name, type or an observation contains the term).
+#
+# `compute:` maps the record onto the Memory contract (types/memory.yml in the default world):
+# `text` is the observations joined, `mentions` the entity's own name, `source` names the system,
+# an entity in the file is ACTIVE, the file's times are `created` / `revised`, the identity is
+# the entity's name.
+- name: mcpMemorySearch
+  kind: files
+  roots: ["memory/mcp"]
+  include: ["**/*.jsonl", "**/*.json"]
+  emit: search
+  unit: line
+  require: { type: entity }
+  maxFiles: 20
+  contentCapKb: 4096
+  compute:
+    id: "r.name"
+    text: "r.name + ' (' + r.entityType + '): ' + reduce(s = '', o IN r.observations | s + o + '. ')"
+    mentions: "[r.name]"
+    file: "r.fileName"
+    source: "'mcp'"
+    status: "'ACTIVE'"
+    confidence: "1.0"
+    created: "r.createdAt"
+    revised: "r.modifiedAt"
+
+- name: mcpMemorySearchAgentic
+  kind: files
+  roots: ["memory/mcp"]
+  include: ["**/*.jsonl", "**/*.json"]
+  emit: search
+  unit: line
+  require: { type: entity }
+  agentic: true
+  maxProbes: 5
+  maxFiles: 20
+  contentCapKb: 4096
+  compute:
+    id: "r.name"
+    text: "r.name + ' (' + r.entityType + '): ' + reduce(s = '', o IN r.observations | s + o + '. ')"
+    mentions: "[r.name]"
+    file: "r.fileName"
+    source: "'mcp'"
+    status: "'ACTIVE'"
+    confidence: "1.0"
+    created: "r.createdAt"
+    revised: "r.modifiedAt"
