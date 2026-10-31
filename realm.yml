@@ -4,7 +4,7 @@ description: >-
   observations the reference `@modelcontextprotocol/server-memory` keeps in its memory.jsonl, read
   live, one memory per entity, so "what do you remember about X" answers from the graph an MCP
   client has been building alongside the assistant's own memory and every other system.
-version: 0.1.0
+version: 0.1.1
 # The provenance label every node this realm owns carries beside its type: :McpMemory:Memory:Mcp.
 realmLabel: Mcp
 author: Embabel

@@ -55,6 +55,20 @@ Retrieval is lexical on the entity's own line — name, type and observations �
 server's `search_nodes` tool matches on, so a memory this realm finds is one the server would
 find. `via:'agentic-rag'` expands the topic into probe terms first.
 
+## The ladder
+
+The shared label is a migration path, and this realm is one rung of it.
+
+- **Mirror** — install the realm and put the server's `memory.jsonl` (or a symlink) under
+  `data/memory/mcp/`; its entities answer under `:Memory` beside the assistant's own from the next query.
+- **Compare** — `memory_bakeoff {topic}` lists what each system recalls, one row per memory with
+  `system` naming it; `memory_systems` counts per system.
+- **Promote** — `gateway.memory.promote({text, source, id})` copies a fact into the assistant's own
+  memory; the row then reads `status: PROMOTED` and leaves plain `:Memory` reads.
+- **Retire** — uninstall the realm; every `:Memory` query keeps answering from the systems that remain.
+
+`source` (`'mcp'`) and `status` (`ACTIVE`) are stamped by each producer's `compute:` block, as the table above says.
+
 ## Not yet
 
 Relation lines are not edges between memories. A `(:McpMemory)-[:RELATED_TO]->(:McpMemory)` join
